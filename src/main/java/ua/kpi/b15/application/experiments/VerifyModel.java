@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 
 public final class VerifyModel implements Experiment {
     private static final SwitchingNodeConfig BASE = SwitchingNodeConfig.BASE;
+    private static final SwitchingNodeConfig MODIFIED =
+            BASE.withTransmission(13, 5).withFlowLimit(5);
 
     private static final List<Map.Entry<String, SwitchingNodeConfig>> BASE_VARIANTS =
             List.of(
@@ -38,6 +40,23 @@ public final class VerifyModel implements Experiment {
                             "a = 15, tl = 15 (детерм.)",
                             BASE.withArrival(15, 0).withTransmission(15, 0)));
 
+    private static final List<Map.Entry<String, SwitchingNodeConfig>> MODIFIED_VARIANTS =
+            List.of(
+                    Map.entry("Модифіковані значення", MODIFIED),
+                    Map.entry("a = unif(12, 7)", MODIFIED.withArrival(12, 7)),
+                    Map.entry("a = unif(20, 7)", MODIFIED.withArrival(20, 7)),
+                    Map.entry("a = unif(1000, 7)", MODIFIED.withArrival(1000, 7)),
+                    Map.entry("tp = 3", MODIFIED.withProcessingTime(3)),
+                    Map.entry("tp = 9", MODIFIED.withProcessingTime(9)),
+                    Map.entry("tl = unif(15, 5)", MODIFIED.withTransmission(15, 5)),
+                    Map.entry("tl = unif(20, 5)", MODIFIED.withTransmission(20, 5)),
+                    Map.entry("L = 1", MODIFIED.withFlowLimit(1)),
+                    Map.entry("L = 3", MODIFIED.withFlowLimit(3)),
+                    Map.entry("b1 = 0,9", MODIFIED.withFirstDirectionShare(0.9)),
+                    Map.entry(
+                            "a = 15, tl = 13 (детерм.)",
+                            MODIFIED.withArrival(15, 0).withTransmission(13, 0)));
+
     private static final List<String> HEADER =
             List.of(
                     "n",
@@ -57,6 +76,11 @@ public final class VerifyModel implements Experiment {
     @Override
     public void run(ExperimentContext context) {
         verify(context, "Верифікація базової моделі", "verification.csv", BASE_VARIANTS);
+        verify(
+                context,
+                "Верифікація модифікованої моделі",
+                "verification_modified.csv",
+                MODIFIED_VARIANTS);
     }
 
     private void verify(
