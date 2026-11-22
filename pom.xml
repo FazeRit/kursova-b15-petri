@@ -6,7 +6,7 @@
 
     <groupId>ua.kpi.b15</groupId>
     <artifactId>message-switching-node-petri</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <name>Імітаційна модель вузла комутації повідомлень на основі стохастичної мережі Петрі (B15)</name>
 
     <properties>
