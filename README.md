@@ -16,3 +16,12 @@ mvn compile exec:java
 
 Режими: `protocol | verify | rng | transient | runs | base | limit | unlimited | proposals | all`,
 наприклад `mvn compile exec:java -Dexec.args="base results"`. Результати зберігаються у файли CSV каталогу `results`.
+
+## Структура
+
+- `model` — мережа Петрі вузла комутації, параметри, збір статистики, генератор випадкових чисел, прогони моделі.
+- `stats` — статистичні методи: оцінки, довірчі інтервали, χ², регресія, ANOVA.
+- `experiments` — експерименти розділів 3–5, кожен у своєму класі з методом `run`.
+- `Main` — вибір режиму, `Output` — вивід у консоль і CSV.
+
+Діаграму класів наведено у файлі `docs/class-diagram.png`.
