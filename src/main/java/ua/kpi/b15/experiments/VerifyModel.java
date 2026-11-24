@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public final class VerifyModel {
+    private static final int RUNS = 1;
     private static final SwitchingNodeConfig BASE = SwitchingNodeConfig.BASE;
     private static final SwitchingNodeConfig MODIFIED =
             BASE.withTransmission(13, 5).withFlowLimit(5);
@@ -91,10 +92,7 @@ public final class VerifyModel {
             Map.Entry<String, SwitchingNodeConfig> variant = variants.get(index);
             List<RunMetrics> runs =
                     SwitchingNodeSimulation.runs(
-                            variant.getValue(),
-                            SwitchingNodeSimulation.RUN_COUNT,
-                            SwitchingNodeSimulation.DEFAULT_SEED,
-                            true);
+                            variant.getValue(), RUNS, SwitchingNodeSimulation.DEFAULT_SEED, true);
             List<Object> row =
                     List.of(
                             index + 1,
