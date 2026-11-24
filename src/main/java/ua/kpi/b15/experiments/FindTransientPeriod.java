@@ -11,12 +11,17 @@ import ua.kpi.b15.model.SwitchingNodeSimulation;
 import ua.kpi.b15.stats.Descriptive;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 
 public final class FindTransientPeriod {
     private static final int PILOT_RUNS = 5;
     private static final long FIRST_SEED = 500;
+    private static final int WINDOW_RUNS = 1_000;
+    private static final long WINDOW_SEED = 600;
+    private static final double WINDOW = 250;
+    private static final double WINDOW_HORIZON = 10_000;
 
     private record TransientCase(
             String label, SwitchingNodeConfig config, double horizon, double step) {}
@@ -43,8 +48,11 @@ public final class FindTransientPeriod {
     private static final List<String> HEADER =
             List.of("case", "run", "T", "Pref", "Uproc", "U1", "W", "n1");
 
+    private static final List<String> WINDOW_HEADER = List.of("T", "Pref", "Uproc", "W");
+
     public static void run(Output out) {
         out.section("Тривалість перехідного періоду");
+        findWarmUp(out);
         List<Snapshot> snapshots = new ArrayList<>();
         for (TransientCase item : CASES) snapshots.addAll(observeCase(item));
 
@@ -86,6 +94,60 @@ public final class FindTransientPeriod {
                             + plain(response.accuracy())
                             + "): T = "
                             + (Double.isNaN(settled) ? "NaN" : plain(settled))
+                            + " мс");
+        }
+    }
+
+    private static void findWarmUp(Output out) {
+        int windows = (int) Math.round(WINDOW_HORIZON / WINDOW);
+        double[][] means = new double[RESPONSES.size()][windows];
+        for (int window = 0; window < windows; window++) {
+            double start = window * WINDOW;
+            List<RunMetrics> runs = new ArrayList<>();
+            for (int run = 0; run < WINDOW_RUNS; run++) {
+                runs.add(
+                        SwitchingNodeSimulation.simulate(
+                                SwitchingNodeConfig.BASE,
+                                start + WINDOW,
+                                start,
+                                false,
+                                new Rng(WINDOW_SEED + run)));
+            }
+            for (int index = 0; index < RESPONSES.size(); index++) {
+                means[index][window] =
+                        Descriptive.mean(
+                                runs.stream().mapToDouble(RESPONSES.get(index).select()).toArray());
+            }
+        }
+
+        List<List<Object>> rows = new ArrayList<>();
+        for (int window = 0; window < windows; window++) {
+            rows.add(
+                    List.of(
+                            fixed((window + 1) * WINDOW, 0),
+                            fixed(means[0][window], 5),
+                            fixed(means[1][window], 5),
+                            fixed(means[2][window], 4)));
+        }
+        out.save("warmup.csv", WINDOW_HEADER, rows);
+
+        for (int index = 0; index < RESPONSES.size(); index++) {
+            Response response = RESPONSES.get(index);
+            double[] steadyPart = Arrays.copyOfRange(means[index], windows / 2, windows);
+            double steady = Descriptive.mean(steadyPart);
+            int settled = windows;
+            while (settled > 0
+                    && Math.abs(means[index][settled - 1] - steady) < response.accuracy())
+                settled--;
+            out.line(
+                    "Перехідний період за вікнами, "
+                            + response.name()
+                            + " (ε = "
+                            + plain(response.accuracy())
+                            + "): стале значення "
+                            + fixed(steady, 4)
+                            + ", Tпп = "
+                            + plain(settled * WINDOW)
                             + " мс");
         }
     }
